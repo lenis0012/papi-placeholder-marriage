@@ -2,7 +2,6 @@ package com.lenis0012.placeholderapi.marriage;
 
 import com.lenis0012.bukkit.marriage2.MPlayer;
 import com.lenis0012.bukkit.marriage2.MarriageAPI;
-import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -11,18 +10,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
+import static com.lenis0012.placeholderapi.marriage.MarriagePlaceholder.*;
 import static me.clip.placeholderapi.PlaceholderAPIPlugin.booleanFalse;
 import static me.clip.placeholderapi.PlaceholderAPIPlugin.booleanTrue;
-import static com.lenis0012.placeholderapi.marriage.MarriagePlaceholder.location;
 
 public class MarriageExpansion extends PlaceholderExpansion {
     private final Map<String, MarriagePlaceholder> placeholders = new LinkedHashMap<>();
+    private final Map<String, MarriagePlaceholder> partnerPlaceholders = new LinkedHashMap<>();
 
     @Override
     public @NotNull String getIdentifier() {
@@ -60,12 +56,15 @@ public class MarriageExpansion extends PlaceholderExpansion {
     public boolean register() {
         placeholders.put("is_married", mPlayer -> mPlayer.isMarried() ? booleanTrue() : booleanFalse());
         placeholders.put("is_priest", mPlayer -> mPlayer.isPriest() ? booleanTrue() : booleanFalse());
+        placeholders.put("is_in_chat", mPlayer -> mPlayer.isInChat() ? booleanTrue() : booleanFalse());
         placeholders.put("gender", mPlayer -> mPlayer.getGender().toString().toLowerCase());
         placeholders.put("gender_chat_prefix", mPlayer -> mPlayer.getGender().getChatPrefix());
         placeholders.put("has_pvp_enabled", mPlayer -> mPlayer.isMarried() && mPlayer.getActiveRelationship().isPVPEnabled() ? booleanTrue() : booleanFalse());
         placeholders.put("has_home_set", mPlayer -> mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet() ? booleanTrue() : booleanFalse());
         placeholders.put("home_location", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
             location(mPlayer.getActiveRelationship().getHome()) : "");
+        placeholders.put("home_world", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
+            world(mPlayer.getActiveRelationship().getHome()) : "");
         placeholders.put("home_x", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
             String.valueOf(mPlayer.getActiveRelationship().getHome().getBlockX()) : "");
         placeholders.put("home_y", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
@@ -80,6 +79,12 @@ public class MarriageExpansion extends PlaceholderExpansion {
             String name = offlinePlayer.getName();
             return name == null ? "" : name;
         });
+        partnerPlaceholders.put("is_priest", mPlayer -> mPlayer.isPriest() ? booleanTrue() : booleanFalse());
+        partnerPlaceholders.put("is_in_chat", mPlayer -> mPlayer.isInChat() ? booleanTrue() : booleanFalse());
+        partnerPlaceholders.put("gender", mPlayer -> mPlayer.getGender().toString().toLowerCase());
+        partnerPlaceholders.put("gender_chat_prefix", mPlayer -> mPlayer.getGender().getChatPrefix());
+        partnerPlaceholders.put("seen", mPlayer -> time(mPlayer.getLastLogin()));
+        partnerPlaceholders.put("seen_logout", mPlayer -> time(mPlayer.getLastLogout()));
         return super.register();
     }
 
@@ -94,6 +99,12 @@ public class MarriageExpansion extends PlaceholderExpansion {
             mPlayer = MarriageAPI.getInstance().getMPlayer(player);
         }
 
+        if (mPlayer != null && identifier.startsWith("partner_")) {
+            MPlayer partner = mPlayer.getPartner();
+            if (partner != null) {
+                return partnerPlaceholders.getOrDefault(identifier.substring(8), MarriagePlaceholder.IDENTITY).process(partner);
+            }
+        }
         return placeholders.getOrDefault(identifier, MarriagePlaceholder.IDENTITY).process(mPlayer);
     }
 }

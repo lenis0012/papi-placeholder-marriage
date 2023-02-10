@@ -52,6 +52,7 @@ public class MarriageExpansion extends PlaceholderExpansion {
         return new ArrayList<>(placeholders.keySet());
     }
 
+    @SuppressWarnings({"deprecation"})
     @Override
     public boolean register() {
         placeholders.put("is_married", mPlayer -> mPlayer.isMarried() ? booleanTrue() : booleanFalse());
@@ -59,24 +60,23 @@ public class MarriageExpansion extends PlaceholderExpansion {
         placeholders.put("is_in_chat", mPlayer -> mPlayer.isInChat() ? booleanTrue() : booleanFalse());
         placeholders.put("gender", mPlayer -> mPlayer.getGender().toString().toLowerCase());
         placeholders.put("gender_chat_prefix", mPlayer -> mPlayer.getGender().getChatPrefix());
-        placeholders.put("has_pvp_enabled", mPlayer -> mPlayer.isMarried() && mPlayer.getActiveRelationship().isPVPEnabled() ? booleanTrue() : booleanFalse());
-        placeholders.put("has_home_set", mPlayer -> mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet() ? booleanTrue() : booleanFalse());
-        placeholders.put("home_location", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
-            location(mPlayer.getActiveRelationship().getHome()) : "");
-        placeholders.put("home_world", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
-            world(mPlayer.getActiveRelationship().getHome()) : "");
-        placeholders.put("home_x", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
-            String.valueOf(mPlayer.getActiveRelationship().getHome().getBlockX()) : "");
-        placeholders.put("home_y", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
-            String.valueOf(mPlayer.getActiveRelationship().getHome().getBlockY()) : "");
-        placeholders.put("home_z", mPlayer -> (mPlayer.isMarried() && mPlayer.getActiveRelationship().isHomeSet()) ?
-            String.valueOf(mPlayer.getActiveRelationship().getHome().getBlockZ()) : "");
+        placeholders.put("has_pvp_enabled", mPlayer -> mPlayer.isMarried() && mPlayer.getMarriage().isPVPEnabled() ? booleanTrue() : booleanFalse());
+        placeholders.put("has_home_set", mPlayer -> mPlayer.isMarried() && mPlayer.getMarriage().isHomeSet() ? booleanTrue() : booleanFalse());
+        placeholders.put("home_location", mPlayer -> (mPlayer.isMarried() && mPlayer.getMarriage().isHomeSet()) ?
+            location(mPlayer.getMarriage().getHome()) : "");
+        placeholders.put("home_world", mPlayer -> (mPlayer.isMarried() && mPlayer.getMarriage().isHomeSet()) ?
+            world(mPlayer.getMarriage().getHome()) : "");
+        placeholders.put("home_x", mPlayer -> (mPlayer.isMarried() && mPlayer.getMarriage().isHomeSet()) ?
+            String.valueOf(mPlayer.getMarriage().getHome().getBlockX()) : "");
+        placeholders.put("home_y", mPlayer -> (mPlayer.isMarried() && mPlayer.getMarriage().isHomeSet()) ?
+            String.valueOf(mPlayer.getMarriage().getHome().getBlockY()) : "");
+        placeholders.put("home_z", mPlayer -> (mPlayer.isMarried() && mPlayer.getMarriage().isHomeSet()) ?
+            String.valueOf(mPlayer.getMarriage().getHome().getBlockZ()) : "");
         placeholders.put("partner", mPlayer -> {
             if (!mPlayer.isMarried()) {
                 return "";
             }
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(mPlayer.getActiveRelationship().getOtherPlayer(mPlayer.getUniqueId()));
-            String name = offlinePlayer.getName();
+            String name = mPlayer.getPartner().getLastName();
             return name == null ? "" : name;
         });
         partnerPlaceholders.put("is_priest", mPlayer -> mPlayer.isPriest() ? booleanTrue() : booleanFalse());
@@ -88,16 +88,14 @@ public class MarriageExpansion extends PlaceholderExpansion {
         return super.register();
     }
 
+    @SuppressWarnings({"deprecation"})
     @Override
     public @Nullable String onPlaceholderRequest(Player player, @NotNull String identifier) {
         if (player == null) {
             return "";
         }
 
-        MPlayer mPlayer = MarriageAPI.getMPlayer(player);
-        if (mPlayer == null) {
-            mPlayer = MarriageAPI.getInstance().getMPlayer(player);
-        }
+        MPlayer mPlayer = MarriageAPI.getInstance().getMPlayer(player);
 
         if (mPlayer != null && identifier.startsWith("partner_")) {
             MPlayer partner = mPlayer.getPartner();
